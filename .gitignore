@@ -25,3 +25,11 @@ venv/
 # os / editor
 .DS_Store
 Thumbs.db
+
+# decks: binary, revised constantly — each save would store a whole new copy
+*.pptx
+*.potx
+*.ppt
+
+# claude code scratch worktrees
+.claude/worktrees/
