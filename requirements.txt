@@ -1,0 +1,35 @@
+# SIH26085 — Urban Flood Nowcasting System
+# Python 3.11 (NOT 3.14 — geospatial/SWMM wheels do not exist for 3.14 yet)
+#
+#   py -3.11 -m venv .venv
+#   .venv\Scripts\python.exe -m pip install -r requirements.txt
+#
+# Every package below appears in the approved stack table of PROJECT_BRIEF.md,
+# except pytest (test runner), matplotlib (charts/maps) and python-dotenv
+# (reads the git-ignored .env), which are tooling, not modelling choices.
+
+# --- geospatial core (Milestone 1: KML -> drainage graph) ---
+geopandas==1.1.4
+shapely==2.1.2
+pyproj==3.7.2
+pyogrio==0.13.0
+rasterio==1.4.4
+networkx==3.6.1
+
+# --- drainage hydraulics (Milestone 2: SWMM) ---
+pyswmm==2.1.0
+swmm-api==0.4.74
+
+# --- plotting and tooling ---
+matplotlib==3.11.1
+pytest==9.1.1
+python-dotenv==1.2.3
+requests==2.34.2
+
+# --- added at Milestone 3 (rainfall nowcast) ---
+# pysteps
+
+# --- added at Milestone 4/5/6 (API, routing) ---
+# fastapi
+# uvicorn
+# osmnx

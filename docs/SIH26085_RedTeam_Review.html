@@ -1,0 +1,644 @@
+<title>SIH26085 Red Team</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Serif:ital,wght@0,400;0,500;1,400&display=swap">
+<style>
+:root{
+  --ground:#e9eef0;
+  --surface:#ffffff;
+  --surface-2:#f2f6f7;
+  --ink:#131b1f;
+  --ink-2:#3b4b52;
+  --muted:#657a82;
+  --rule:#cbd6da;
+  --rule-soft:#dde5e8;
+  --accent:#0f5d66;
+  --accent-soft:#d7e7e8;
+  --crit:#a83a1c;
+  --major:#b07d12;
+  --minor:#4a6f7a;
+  --ok:#2f6b46;
+  --shadow:0 1px 0 rgba(19,27,31,.06), 0 8px 24px -18px rgba(19,27,31,.5);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --ground:#0d1316;
+    --surface:#141d21;
+    --surface-2:#18242a;
+    --ink:#e4ebed;
+    --ink-2:#b9c8cd;
+    --muted:#88a0a8;
+    --rule:#2a3a41;
+    --rule-soft:#202e34;
+    --accent:#57b6ba;
+    --accent-soft:#17343a;
+    --crit:#e08160;
+    --major:#dcb04f;
+    --minor:#8fb0ba;
+    --ok:#68b384;
+    --shadow:0 1px 0 rgba(0,0,0,.4), 0 10px 28px -20px #000;
+  }
+}
+:root[data-theme="dark"]{
+  --ground:#0d1316;
+  --surface:#141d21;
+  --surface-2:#18242a;
+  --ink:#e4ebed;
+  --ink-2:#b9c8cd;
+  --muted:#88a0a8;
+  --rule:#2a3a41;
+  --rule-soft:#202e34;
+  --accent:#57b6ba;
+  --accent-soft:#17343a;
+  --crit:#e08160;
+  --major:#dcb04f;
+  --minor:#8fb0ba;
+  --ok:#68b384;
+  --shadow:0 1px 0 rgba(0,0,0,.4), 0 10px 28px -20px #000;
+}
+
+*{box-sizing:border-box}
+body{
+  background:var(--ground);
+  color:var(--ink);
+  font-family:"IBM Plex Serif",Georgia,"Times New Roman",serif;
+  font-size:16.5px;
+  line-height:1.62;
+  margin:0;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:1080px;margin:0 auto;padding:0 24px 96px}
+.col{max-width:70ch}
+
+h1,h2,h3,.label,th,.chip,.num{font-family:"IBM Plex Sans Condensed",Arial Narrow,Helvetica,sans-serif}
+h1{font-size:clamp(2rem,4.4vw,3rem);line-height:1.05;margin:0 0 .35em;font-weight:700;letter-spacing:-.01em;text-wrap:balance}
+h2{font-size:1.6rem;line-height:1.15;margin:0 0 .5rem;font-weight:600;text-wrap:balance}
+h3{font-size:1.08rem;margin:0;font-weight:600;line-height:1.3;text-wrap:balance}
+p{margin:0 0 1em}
+a{color:var(--accent);text-underline-offset:.18em;text-decoration-thickness:.06em}
+a:focus-visible,summary:focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:2px}
+code,.mono{font-family:"IBM Plex Mono",ui-monospace,Menlo,monospace;font-size:.87em}
+
+.label{
+  font-size:.72rem;letter-spacing:.13em;text-transform:uppercase;
+  color:var(--muted);font-weight:600;
+}
+
+/* ---------- masthead ---------- */
+header.mast{
+  border-bottom:2px solid var(--ink);
+  padding:56px 0 22px;margin-bottom:38px;
+}
+.kicker{display:flex;flex-wrap:wrap;gap:10px 18px;align-items:baseline;margin-bottom:22px}
+.standfirst{font-size:1.16rem;color:var(--ink-2);max-width:62ch;margin:0}
+.standfirst strong{color:var(--ink)}
+
+/* ---------- facts strip ---------- */
+.facts{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));
+  gap:1px;background:var(--rule);border:1px solid var(--rule);
+  margin:34px 0 0;
+}
+.fact{background:var(--surface);padding:16px 18px}
+.fact .v{font-family:"IBM Plex Sans Condensed",sans-serif;font-size:1.5rem;font-weight:700;line-height:1.1;font-variant-numeric:tabular-nums}
+.fact .k{font-size:.82rem;color:var(--muted);margin-top:4px;line-height:1.35}
+
+/* ---------- sections ---------- */
+section{margin-top:64px}
+.sechead{display:flex;align-items:baseline;gap:14px;border-bottom:1px solid var(--rule);padding-bottom:10px;margin-bottom:26px}
+.sechead .n{font-family:"IBM Plex Mono",monospace;font-size:.8rem;color:var(--accent);letter-spacing:.06em}
+
+/* ---------- faults ---------- */
+.faults{display:flex;flex-direction:column;gap:0;border-top:1px solid var(--rule-soft)}
+.fault{
+  display:grid;grid-template-columns:64px 1fr;gap:0 20px;
+  border-bottom:1px solid var(--rule-soft);
+  padding:20px 0 20px 14px;
+  border-left:4px solid var(--sev,var(--minor));
+}
+.fault .num{font-family:"IBM Plex Mono",monospace;font-size:.86rem;color:var(--muted);padding-top:.25em}
+.fault p{margin:.5em 0 0;color:var(--ink-2)}
+.fault p:last-child{margin-bottom:0}
+.fault .ev{font-size:.9rem;color:var(--muted);border-left:2px solid var(--rule);padding-left:12px;margin-top:.7em}
+.sev-crit{--sev:var(--crit)} .sev-major{--sev:var(--major)} .sev-minor{--sev:var(--minor)}
+.chip{
+  display:inline-block;font-size:.66rem;letter-spacing:.1em;text-transform:uppercase;
+  font-weight:700;color:var(--sev,var(--minor));border:1px solid currentColor;
+  padding:1px 6px;margin-left:10px;vertical-align:.14em;white-space:nowrap;
+}
+.headline-row{display:flex;flex-wrap:wrap;align-items:baseline}
+
+/* ---------- fix cards ---------- */
+.fixes{display:grid;gap:18px;grid-template-columns:repeat(auto-fit,minmax(300px,1fr))}
+.fix{background:var(--surface);border:1px solid var(--rule);padding:20px 22px;box-shadow:var(--shadow)}
+.fix h3{margin-bottom:.35em}
+.fix .ref{font-family:"IBM Plex Mono",monospace;font-size:.75rem;color:var(--accent);display:block;margin-bottom:.5em}
+.fix p{margin:0 0 .7em;font-size:.95rem;color:var(--ink-2)}
+.fix p:last-child{margin-bottom:0}
+
+/* ---------- tables ---------- */
+.scroll{overflow-x:auto;border:1px solid var(--rule);background:var(--surface)}
+table{border-collapse:collapse;width:100%;min-width:620px;font-size:.93rem}
+th{
+  text-align:left;font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--muted);font-weight:600;padding:12px 16px;border-bottom:1px solid var(--rule);
+  background:var(--surface-2);vertical-align:bottom;
+}
+td{padding:12px 16px;border-bottom:1px solid var(--rule-soft);vertical-align:top;color:var(--ink-2)}
+tr:last-child td{border-bottom:none}
+td:first-child{color:var(--ink);font-weight:500}
+.mono-cell{font-family:"IBM Plex Mono",monospace;font-size:.85rem;white-space:nowrap;font-variant-numeric:tabular-nums}
+
+/* ---------- pull ---------- */
+.pull{
+  border-left:4px solid var(--accent);background:var(--accent-soft);
+  padding:18px 22px;margin:26px 0;
+}
+.pull p{margin:0;font-size:1.05rem;color:var(--ink)}
+.pull p + p{margin-top:.6em}
+
+/* ---------- qa ---------- */
+details.qa{border-bottom:1px solid var(--rule-soft);padding:2px 0}
+details.qa summary{
+  cursor:pointer;list-style:none;padding:14px 0;
+  font-family:"IBM Plex Sans Condensed",sans-serif;font-weight:600;font-size:1.02rem;
+  display:flex;gap:12px;align-items:flex-start;
+}
+details.qa summary::-webkit-details-marker{display:none}
+details.qa summary::before{content:"+";color:var(--accent);font-family:"IBM Plex Mono",monospace;flex:0 0 auto;line-height:1.5}
+details.qa[open] summary::before{content:"−"}
+details.qa .body{padding:0 0 16px 24px;color:var(--ink-2);font-size:.96rem}
+details.qa .body p{margin:0 0 .7em}
+details.qa .body p:last-child{margin:0}
+
+/* ---------- misc ---------- */
+ul.tight{padding-left:1.15em;margin:.4em 0 1em}
+ul.tight li{margin-bottom:.35em;color:var(--ink-2)}
+.srcs{font-size:.88rem;color:var(--muted)}
+.srcs li{margin-bottom:.3em}
+footer{margin-top:72px;border-top:1px solid var(--rule);padding-top:18px;font-size:.85rem;color:var(--muted)}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+@media (max-width:560px){
+  .fault{grid-template-columns:1fr;gap:6px}
+  .fault .num{padding-top:0}
+}
+</style>
+
+<div class="wrap">
+
+<header class="mast">
+  <div class="kicker">
+    <span class="label">SIH 2026 · Problem statement SIH26085</span>
+    <span class="label">Ministry of Earth Sciences · NCMRWF</span>
+  </div>
+  <h1>Red team on the flood nowcasting plan</h1>
+  <p class="standfirst">The Perplexity thread produced a usable skeleton and one correct verdict. It also <strong>missed the incumbent system built by the very ministry that wrote this problem statement</strong>, planned for the wrong hackathon length, and invented at least three numbers and one citation. Here is what breaks, what to do instead, and where the actual win is.</p>
+
+  <div class="facts">
+    <div class="fact"><div class="v">20 Sep 2026</div><div class="k">Idea submission deadline on the SIH portal for SIH26085</div></div>
+    <div class="fact"><div class="v">6 slides</div><div class="k">Including title, exported to PDF — the only thing evaluated in Round 1</div></div>
+    <div class="fact"><div class="v">36 hours</div><div class="k">Grand Finale sprint, December 2026 — not 48</div></div>
+    <div class="fact"><div class="v">2 systems</div><div class="k">iFLOWS-Mumbai and CFLOWS-Chennai, already operational, built by MoES</div></div>
+  </div>
+</header>
+
+<section>
+  <div class="sechead"><span class="n">01</span><h2>What is actually being graded right now</h2></div>
+  <div class="col">
+    <p>The thread optimised almost entirely for a Grand Finale demo. That is the third gate, not the first. Two gates come before it, and both are judged on the deck alone.</p>
+    <p>The internal college hackathon decides who gets nominated at all — most teams are eliminated here, and the SPOC nominates on the 6-slide format. Then national Round 1 scores the submitted idea on five parameters, each out of 20: presentation of the solution, innovation, solution approach, technical soundness and feasibility, and <em>execution timeline for the hackathon</em> — explicitly "blueprint of prototype completion timeline with respect to hackathon duration". Round 1 carries 20% of the final score.</p>
+    <p>The deck currently in the SIH folder has no timeline anywhere on it. That is a scored parameter left blank, and it is the cheapest fix on this page.</p>
+  </div>
+</section>
+
+<section>
+  <div class="sechead"><span class="n">02</span><h2>Faults, ranked</h2></div>
+  <div class="col"><p>Severity is judged by one test: what happens if an NCMRWF evaluator notices it during the pitch or Q&amp;A.</p></div>
+
+  <div class="faults">
+
+    <div class="fault sev-crit">
+      <div class="num">F1</div>
+      <div>
+        <div class="headline-row"><h3>The competitor analysis missed MoES's own flood warning systems</h3><span class="chip">Critical</span></div>
+        <p>The thread listed Google Flood Hub, IBM, Tomorrow.io, Esri, IMD Mausam, SACHET, NRSC atlases and BMC's GIS — and concluded "no system couples rainfall nowcasts with drainage hydraulics for Indian cities". Both statements are wrong in the worst possible direction. MoES built <strong>CFLOWS-Chennai</strong> (launched 2019, run by NCCR with IMD, NCMRWF and INCOIS inputs) and <strong>iFLOWS-Mumbai</strong> (launched June 2020, with MCGM). iFLOWS runs a coupled 1D drainage + 2D hydrodynamic model, on a 20 cm DEM supplied by MCGM and 120 rain gauges, and issues ward-level water depth 6 to 72 hours ahead.</p>
+        <p>NCMRWF is a named contributor to both. Claiming novelty against a gap the evaluators personally filled is how a promising deck dies in ninety seconds.</p>
+        <p class="ev">PIB release 11 Jun 2020; NCCR iFLOWS and CFLOWS briefing documents.</p>
+      </div>
+    </div>
+
+    <div class="fault sev-crit">
+      <div class="num">F2</div>
+      <div>
+        <div class="headline-row"><h3>The rainfall input cannot support the claim built on top of it</h3><span class="chip">Critical</span></div>
+        <p>The thread's recommendation is to skip radar and drive the model from IMD's district nowcast API. That product is district-scale — one categorical warning covering thousands of square kilometres. You cannot force a street-level, centimetre-band inundation model with it and call the result a nowcast. This, not the drainage graph, is the weakest link in the proposed architecture, and it sits in front of the one department that actually specialises in nowcasting.</p>
+        <p>It also overstates the block: IMD's public API index does list a radar image product and lightning data alongside the district and station nowcasts, the national radar mosaic is published openly, and raw DWR volume data is orderable through IMD's Data Supply Portal. Radar-based nowcasting is not off the table.</p>
+        <p class="ev">api.imd.gov.in API reference; mausam.imd.gov.in radar services; radarapi.imd.gov.in.</p>
+      </div>
+    </div>
+
+    <div class="fault sev-major">
+      <div class="num">F3</div>
+      <div>
+        <div class="headline-row"><h3>Planned for a 48-hour hackathon that does not exist</h3><span class="chip">Major</span></div>
+        <p>Whole sections are built around "48 hours is the minimum viable" with an hour-by-hour 48-hour plan. The SIH Grand Finale is a 36-hour non-stop sprint at a nodal centre. Since Round 1 explicitly scores the build timeline against hackathon duration, submitting a 48-hour plan is a self-inflicted mark deduction and signals the team has not read the rules.</p>
+      </div>
+    </div>
+
+    <div class="fault sev-major">
+      <div class="num">F4</div>
+      <div>
+        <div class="headline-row"><h3>Fake resolution: 30 m DEM "downscaled" to 10 m</h3><span class="chip">Major</span></div>
+        <p>Bilinear interpolation of SRTM invents no terrain. A 30 m grid cannot resolve curbs, road crowns or the half-metre depressions that decide where a street ponds — and NRSC's policy is explicit: 30 m CartoDEM is the free tier, 10 m is chargeable and clearance-gated. Meanwhile iFLOWS runs on 20 cm survey data. Presenting "10 m interpolated" as a resolution is the single easiest thing for a judge to disassemble.</p>
+      </div>
+    </div>
+
+    <div class="fault sev-major">
+      <div class="num">F5</div>
+      <div>
+        <div class="headline-row"><h3>The drainage data is treated as absent when it is partly public</h3><span class="chip">Major</span></div>
+        <p>The thread repeatedly falls back to a "synthetic 10–20 node graph". OpenCity publishes Greater Chennai Corporation's stormwater drain maps: per-ward PDFs for 114 wards <em>and</em> a citywide 2023 KML of about 27 MB, public domain. That is real drain geometry — actual alignments and connectivity, not a guess. What is genuinely missing is <em>attributes</em>: diameter, invert level, slope, condition.</p>
+        <p>This changes the story you tell. "We synthesised a fake network" is a weakness; "we built the graph from GCC's published drain alignments and estimated the hydraulic attributes, flagged as estimated" is a method.</p>
+        <p class="ev">data.opencity.in — Chennai Stormwater Drain (SWD) Maps, source gcc.gov.in.</p>
+      </div>
+    </div>
+
+    <div class="fault sev-major">
+      <div class="num">F6</div>
+      <div>
+        <div class="headline-row"><h3>A fabricated citation, repeated three times</h3><span class="chip">Major</span></div>
+        <p>The validation and Q&amp;A sections quote a historical flood report reading <span class="mono">"Ward 52水深 1m"</span>. Chinese characters inside a supposed Chennai news quote mean the source does not exist. It is used as the ground truth for the entire validation plan, and the prompt that produced it explicitly forbade inventing sources. Anything downstream of it must be re-sourced from scratch.</p>
+      </div>
+    </div>
+
+    <div class="fault sev-major">
+      <div class="num">F7</div>
+      <div>
+        <div class="headline-row"><h3>Invented figures, presented as answers to judges</h3><span class="chip">Major</span></div>
+        <p>Scripted Q&amp;A answers include cloud cost of "about ₹50k/month for 100 cities" and licensing at "₹10–20 lakh/year for a city", plus "₹1000+ crore/year" in Mumbai losses. None are sourced. Delivering an unsourced rupee figure to a government evaluator invites exactly one follow-up: "based on what?" Give a method instead of a number, or drop the claim.</p>
+      </div>
+    </div>
+
+    <div class="fault sev-minor">
+      <div class="num">F8</div>
+      <div>
+        <div class="headline-row"><h3>Broken repository reference</h3><span class="chip">Minor</span></div>
+        <p>SWMManywhere is cited as <span class="mono">github.com/Karney/SWMManywhere</span>. The real project is <span class="mono">ImperialCollegeLondon/SWMManywhere</span> — BSD-3, pip-installable, JOSS-reviewed, and it synthesises a full SWMM model anywhere from a bounding box using OSM, DEM and building footprints. It is arguably the most useful tool in the whole thread, and the link given goes nowhere.</p>
+      </div>
+    </div>
+
+    <div class="fault sev-minor">
+      <div class="num">F9</div>
+      <div>
+        <div class="headline-row"><h3>The deck cites an unofficial mirror as its problem-statement source</h3><span class="chip">Minor</span></div>
+        <p>Slide 6 links <span class="mono">sih2026.vuce.in/ps/SIH26085</span>. That site describes itself as a community archive "not affiliated with Smart India Hackathon or the Government of India". Citing a third-party scrape of the organiser's own portal, in a submission to that organiser, is a needless own-goal. Use <span class="mono">sih.gov.in/sih2026PS</span>.</p>
+      </div>
+    </div>
+
+    <div class="fault sev-minor">
+      <div class="num">F10</div>
+      <div>
+        <div class="headline-row"><h3>Geography errors and scoring theatre</h3><span class="chip">Minor</span></div>
+        <p>"Mumbai Ward 116" appears in the executive summary as a demo target; Mumbai has 24 administrative wards, lettered A to T — 116 is a Chennai ward number that leaked across. Separately, the "7.2/10" verdict and "65–75% probability of a convincing prototype" are precision without a rubric. Both are noise; neither should reach a slide.</p>
+      </div>
+    </div>
+
+    <div class="fault sev-minor">
+      <div class="num">F11</div>
+      <div>
+        <div class="headline-row"><h3>The GNN is placed first among differentiators, and it is the one you may not finish</h3><span class="chip">Minor</span></div>
+        <p>A graph surrogate for drainage hydraulics is real, published work and worth pursuing — but it needs thousands of SWMM runs generated as training data before it does anything. The thread ranks it as the top innovation and then, in its own Q&amp;A script, has you telling judges "we use a pre-trained GNN on synthetic SWMM data". If the surrogate is not trained, that sentence is untrue. Rank it as an accelerator, not the headline.</p>
+      </div>
+    </div>
+
+    <div class="fault sev-minor">
+      <div class="num">F12</div>
+      <div>
+        <div class="headline-row"><h3>A whole turn spent on the wrong repository</h3><span class="chip">Minor</span></div>
+        <p>The FloodSense evaluation reached the right answer — not a defensible baseline — but it assessed a repo it admitted it could never load, from Devpost and a journal paper that contradict each other. The verdict stands; just keep FloodSense out of the deck entirely rather than citing it as related work.</p>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<section>
+  <div class="sechead"><span class="n">03</span><h2>The workarounds</h2></div>
+
+  <div class="pull">
+    <p>Reposition before you rebuild. The strongest sentence available to this team is not "nobody does this" — it is: <strong>MoES already warns Mumbai and Chennai at ward scale, 6 to 72 hours ahead, using bespoke survey data that took years and cannot be repeated for every Indian city. We nowcast the next three hours at street-segment scale, from open data, in a ward we can stand up anywhere in a day.</strong></p>
+    <p>That is true, it is checkable, and it flatters the evaluators' own work instead of denying it.</p>
+  </div>
+
+  <div class="fixes">
+    <div class="fix">
+      <span class="ref">Fixes F1</span>
+      <h3>Put iFLOWS and CFLOWS on the slide yourself</h3>
+      <p>A three-row comparison — lead time, spatial unit, data dependency — with iFLOWS, CFLOWS and you. Naming the incumbent first proves you did the homework and removes the ambush from Q&amp;A.</p>
+      <p>The gap you own: 0–3 h, street segment, open data, re-runnable in seconds, exposed as a routing API. Never claim to beat iFLOWS on accuracy.</p>
+    </div>
+
+    <div class="fix">
+      <span class="ref">Fixes F2</span>
+      <h3>Make the rainfall nowcast real, in two tiers</h3>
+      <p>Tier 1: optical-flow advection of successive public radar reflectivity frames to produce a 0–180 min rainfall field at radar pixel scale. This is a classical, defensible nowcasting method and it is the component NCMRWF will judge hardest.</p>
+      <p>Tier 2 fallback: IMD district nowcast plus AWS/ARG station rainfall from the public API to set magnitude, clearly labelled as coarse forcing. Verify tier 1 against later observed frames using CSI and lead time.</p>
+    </div>
+
+    <div class="fix">
+      <span class="ref">Fixes F5, F8</span>
+      <h3>Build the drainage graph from GCC's own KML</h3>
+      <p>Load the 2023 citywide SWD KML, clip to one ward, and derive nodes and directed edges from the real alignments. Attach attributes in two classes and colour them differently in the UI: measured where the ward PDF gives a size, estimated where you infer from drain class and DEM slope.</p>
+      <p>Use SWMManywhere to generate a SWMM model for any second ward or city, and PySWMM to run it. That is your portability proof.</p>
+    </div>
+
+    <div class="fix">
+      <span class="ref">Fixes F4</span>
+      <h3>Stop selling grid resolution, sell the unit of decision</h3>
+      <p>Predict per road segment and per drainage node, not per 10 m pixel. Segments come from OSM, relative elevation and slope from 30 m CartoDEM or SRTM, and the model reports a depth band and a time-to-flood per segment.</p>
+      <p>This is honest about the terrain data, and it is also the form a traffic controller or an ambulance dispatcher can act on.</p>
+    </div>
+
+    <div class="fix">
+      <span class="ref">Fixes F6</span>
+      <h3>Rebuild validation on events you can actually document</h3>
+      <p>Pick two events with public traces — Chennai December 2015 and Cyclone Michaung December 2023 are the obvious pair — and assemble a list of streets reported waterlogged from GCC complaint data and dated news reports with locations you can geocode yourself.</p>
+      <p>Then score the binary question the PS actually asks: did this segment flood? Report POD, FAR and CSI with the confusion matrix visible. A confusion matrix on twenty streets beats an invented 95%.</p>
+    </div>
+
+    <div class="fix">
+      <span class="ref">Fixes F3</span>
+      <h3>Re-cut every plan to 36 hours</h3>
+      <p>And put a compact version of it on the feasibility slide, because Round 1 scores it. Hours 0–4 data and skeleton, 4–12 coupled model on one ward, 12–20 API and map, 20–26 routing, 26–31 scenarios and validation table, 31–36 hardening, rehearsal, recorded backup demo.</p>
+    </div>
+
+    <div class="fix">
+      <span class="ref">Fixes F7, F10, F11</span>
+      <h3>Delete every unsourced number</h3>
+      <p>No rupee figures, no accuracy percentages, no probability of success. Where a number is genuinely needed, show the method that would produce it. Mark model performance as a target until measured, which the current deck already does well in one place — make it consistent everywhere.</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="sechead"><span class="n">04</span><h2>Where the win actually is</h2></div>
+  <div class="col">
+    <p>Twenty other teams will show a map with red streets on it. Three things separate a shortlisted deck from those, and none of them is the model architecture.</p>
+  </div>
+
+  <div class="scroll" style="margin-top:8px">
+    <table>
+      <thead>
+        <tr><th>Lever</th><th>What it looks like in the demo</th><th>Why it scores</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>The judge's knob</td>
+          <td>Two live controls: a rainfall multiplier, and click any manhole to block it to 50% capacity. Map, depth bands and the ambulance route all recompute in front of them.</td>
+          <td>It is the one demand that separates a simulation from a recorded video, and the thread was right that judges ask it. Design for it from hour zero — nothing precomputed.</td>
+        </tr>
+        <tr>
+          <td>The causal panel</td>
+          <td>Click a flagged street: inflow at the contributing inlets, pipe capacity by Manning, the node that surcharges, the minute it happens, and the confidence class of every attribute used.</td>
+          <td>Turns "the AI says red" into an engineering argument. This is what makes a student build read as government-grade, and it is cheap to implement.</td>
+        </tr>
+        <tr>
+          <td>Portability in one command</td>
+          <td>Enter a bounding box for a ward the judges name — including one you have never seen — and generate a runnable drainage model live from open data.</td>
+          <td>iFLOWS took years of bathymetry and survey per city. If you can bootstrap a rough ward model anywhere in minutes, you address the cities MoES will never survey. This is your real USP.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="col" style="margin-top:26px">
+    <p>Two smaller things worth the effort: name a real deployment partner ambition on the impact slide rather than a generic stakeholder list, and add uncertainty as a first-class output — a segment flagged "high risk, low confidence" is more credible than a false precision, and it is the honest consequence of estimated pipe attributes.</p>
+  </div>
+</section>
+
+<section>
+  <div class="sechead"><span class="n">05</span><h2>Line edits to the deck in the SIH folder</h2></div>
+  <div class="scroll">
+    <table>
+      <thead><tr><th>Slide</th><th>Change</th><th>Reason</th></tr></thead>
+      <tbody>
+        <tr><td class="mono-cell">1 · Title</td><td>Fill the Team ID and registered team name placeholders; confirm the team is exactly six members with at least one woman.</td><td>Both placeholders are still bracketed text. Team composition is a hard nomination rule.</td></tr>
+        <tr><td class="mono-cell">2 · Idea</td><td>Replace the "current gap" band with the three-row incumbent comparison. Add one small screenshot of real output.</td><td>F1. Also, the slide currently argues in arrows; evaluators want to see the thing.</td></tr>
+        <tr><td class="mono-cell">3 · Technical</td><td>Split the rainfall box into radar-advection nowcast and coarse fallback. Mark PyTorch Geometric as optional acceleration, not core stack.</td><td>F2, F11. Right now the pipeline's first box is its weakest.</td></tr>
+        <tr><td class="mono-cell">4 · Feasibility</td><td>Add the 36-hour build timeline as a compact strip. Change the drainage risk row from "synthetic" to "published alignments, estimated attributes".</td><td>F3, F5. The timeline is a scored Round 1 parameter and is currently absent.</td></tr>
+        <tr><td class="mono-cell">5 · Impact</td><td>Keep as is — the before/after and "targets until validated" line are the strongest content in the deck. Add the one validation event you will actually replay.</td><td>Grounds the metrics list in something specific.</td></tr>
+        <tr><td class="mono-cell">6 · References</td><td>Swap the vuce.in link for sih.gov.in. Fix the SWMManywhere URL. Give the two "2024 research literature" entries real titles and DOIs, or cut them.</td><td>F8, F9. An unresolvable citation on a references slide costs more than a missing one.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="col" style="margin-top:22px">
+    <p>One structural check before export: the template caps the deck at six slides including the title, the instructions slide must be deleted, and the portal accepts PDF only.</p>
+  </div>
+</section>
+
+<section>
+  <div class="sechead"><span class="n">06</span><h2>Questions to be ready for</h2></div>
+  <div>
+    <details class="qa">
+      <summary>MoES already runs iFLOWS-Mumbai and CFLOWS-Chennai. What are you adding?</summary>
+      <div class="body">
+        <p>Lead time and spatial unit. iFLOWS forecasts 6 to 72 hours ahead at ward level, from a 20 cm survey DEM and a dedicated gauge network. We target 0 to 3 hours at road-segment level, driven by radar advection rather than NWP, and we run on open data so the same pipeline can be stood up in a city that has no survey programme. We are complementary to iFLOWS, not a replacement for it — the natural production form is a nowcast module feeding the same dissemination channel.</p>
+      </div>
+    </details>
+    <details class="qa">
+      <summary>Where does your rainfall actually come from, and at what resolution?</summary>
+      <div class="body">
+        <p>Successive public radar reflectivity frames, advected forward by optical flow to 180 minutes, converted to rain rate with a standard Z–R relation whose coefficients we state. We verify the advection against the observed frames that follow, and report CSI by lead time. When radar is unavailable we fall back to district nowcast plus station rainfall, and the dashboard labels the run as coarse forcing — the forecast does not silently degrade.</p>
+      </div>
+    </details>
+    <details class="qa">
+      <summary>Your DEM is 30 m. How can you predict street-level water depth?</summary>
+      <div class="body">
+        <p>We do not predict a depth field at 30 m and call it street level. We predict per road segment and per drainage node: relative elevation and slope from the DEM, contributing area from land cover, and the surcharge state from the drainage model. Output is a depth band with a confidence class, never a centimetre point value. Where a city has LiDAR or survey terrain, the same model consumes it and the bands tighten.</p>
+      </div>
+    </details>
+    <details class="qa">
+      <summary>Is your drainage network real?</summary>
+      <div class="body">
+        <p>The geometry is: alignments and connectivity come from the Greater Chennai Corporation stormwater drain maps published on OpenCity. The hydraulic attributes are not — diameters, inverts and slopes are estimated from drain class and terrain, and the interface marks every estimated attribute. In production these come from the corporation's asset database. We would rather show you which parameters are estimated than present a network we cannot substantiate.</p>
+      </div>
+    </details>
+    <details class="qa">
+      <summary>How do you know any of this is right?</summary>
+      <div class="body">
+        <p>We replay a real event and score a binary question: did this segment flood. Ground truth is the list of streets documented as waterlogged in corporation complaint records and dated reports for that event. We report POD, FAR and CSI with the confusion matrix, on a stated number of segments. It is a small sample and we say so. We do not claim a depth accuracy, because we have no depth observations to claim it against.</p>
+      </div>
+    </details>
+    <details class="qa">
+      <summary>What did you build yourselves, and what did an AI write?</summary>
+      <div class="body">
+        <p>Worth rehearsing honestly — 2026 panels ask it. The defensible split: tooling, UI scaffolding and data plumbing were AI-accelerated; the coupling logic, the parameter estimation, the verification protocol and every number on the slides are ours, and any member can derive the runoff and pipe-capacity equations at the whiteboard. Make sure that last part is true before you say it.</p>
+      </div>
+    </details>
+  </div>
+</section>
+
+<section>
+  <div class="sechead"><span class="n">07</span><h2>Sixteen days</h2></div>
+  <div class="scroll">
+    <table>
+      <thead><tr><th>Window</th><th>Do</th><th>Done when</th></tr></thead>
+      <tbody>
+        <tr><td class="mono-cell">Days 1–2</td><td>Download the GCC SWD KML and the target ward PDF; confirm the ward has usable drain geometry. Register for the IMD API and start any access request in parallel.</td><td>One ward's drains open in QGIS and a node/edge graph exports from it.</td></tr>
+        <tr><td class="mono-cell">Days 3–5</td><td>Radar advection spike: pull two hours of public radar frames, run optical flow, produce a forward rainfall field, plot CSI against the observed frames.</td><td>A chart showing skill decaying with lead time. This single figure carries the deck.</td></tr>
+        <tr><td class="mono-cell">Days 4–7</td><td>SWMManywhere plus PySWMM on the same ward; get a surcharge time series out of one storm.</td><td>A node surcharges at a plausible minute for a known rainfall input.</td></tr>
+        <tr><td class="mono-cell">Days 6–9</td><td>Assemble the event ground-truth list. Twenty to forty geocoded flooded streets is enough.</td><td>A CSV with segment ids, event date and source link per row.</td></tr>
+        <tr><td class="mono-cell">Days 8–12</td><td>Thin end-to-end slice: rainfall in, map out, one route, the rainfall multiplier working. Ugly is fine.</td><td>Deployed on a public URL you can open on a phone.</td></tr>
+        <tr><td class="mono-cell">Days 12–15</td><td>Rewrite the six slides against section 05. Every figure traced to a source or deleted. Rehearse the pitch to time, twice, with someone hostile.</td><td>PDF exported, six slides, no placeholders, no unsourced numbers.</td></tr>
+        <tr><td class="mono-cell">Day 16</td><td>Submit through the SPOC. Do not leave the upload to the deadline day.</td><td>Confirmation on the portal.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="col" style="margin-top:22px">
+    <p>If the internal college round lands before that, bring the deployed link and the CSI chart even if the model behind them is thin. Most internal teams arrive with slides only; a working URL and one honest verification plot is a wide margin.</p>
+  </div>
+</section>
+
+<section>
+  <div class="sechead"><span class="n">08</span><h2>Appendix A — FloodSense, in plain language</h2></div>
+  <div class="col">
+    <p>The Perplexity thread judged this repository without ever loading it. We downloaded the code and read every file. Here is what it actually is, with no jargon.</p>
+    <p>It is a <strong>phone app</strong>. About 2,700 lines of Dart across 17 screens, built with Flutter, uploaded in a single commit on 12 November 2025, and free to reuse under an MIT licence. As a student phone app it is competent: it has sign-up, a map, photo uploads, and a way for people to report flooding they see. As a starting point for SIH26085 it is the wrong species of software — the problem statement asks for a server that runs a water model and a web dashboard, and there is no server and no model here.</p>
+  </div>
+
+  <div class="scroll" style="margin-top:8px">
+    <table>
+      <thead><tr><th>The feature</th><th>What the code really does</th><th>Why that is not the problem</th></tr></thead>
+      <tbody>
+        <tr>
+          <td>"Flood detection"</td>
+          <td>Adds up all the rain in the weather service's five-day forecast. If the total goes over 100 mm, it prints "High Flood Risk".</td>
+          <td>It is a rain total with a threshold — no ground, no slope, no drains, and no sense of <em>when</em>. Heavy rain spread over five days is harmless; the same rain in forty minutes floods a city.</td>
+        </tr>
+        <tr>
+          <td>"Flood zone map"</td>
+          <td>Draws one circle of 80 km radius around wherever you are standing, and colours it blue if the weather service has any flood warning for the region.</td>
+          <td>An 80 km circle covers Chennai and most of the district around it. The problem statement asks which street corner floods.</td>
+        </tr>
+        <tr>
+          <td>"Safe route"</td>
+          <td>Asks a routing service for three routes, then checks the regional weather warning at points spaced 1 km apart along each one.</td>
+          <td>Because the warning is regional, every point on every route returns the same answer — so all three routes are safe together or risky together. The app never tells the router to avoid anywhere; it just hides routes.</td>
+        </tr>
+        <tr>
+          <td>"Crowdsourced reports"</td>
+          <td>People submit a flood sighting with a photo; stored in a cloud database. This part genuinely works.</td>
+          <td>It is a decent idea and the only part worth thinking about later — but it is an add-on, not the coupled rainfall-and-drainage model being asked for.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="col" style="margin-top:26px">
+    <p>Three things you would inherit by forking it. <strong>Keys left in the code:</strong> a weather-service key sits in plain text in two files, a live database key in a third, and the Google services file is committed — fork it and someone else's credentials are in your project's history. <strong>It does not run as published:</strong> the routing screen reads a settings file that the app never loads and never packages, so a fresh copy crashes the moment you open the headline feature. <strong>No real tests:</strong> the only test file is the template Flutter generates, still carrying its "change this matcher" comment.</p>
+  </div>
+
+  <div class="pull">
+    <p><strong>Verdict: do not build on it.</strong> Take one idea — showing three routes, marking each one's risk, and making the user confirm before taking a flagged one is a sound interaction worth copying when you design your routing panel. Write it yourself; do not import the file, and do not cite the project in the deck.</p>
+    <p>The real danger is not code quality. Starting from a phone app quietly pulls the team towards building a citizen app, when SIH26085 asks for a web dashboard and an API that navigation systems can call. That detour costs weeks you do not have.</p>
+  </div>
+</section>
+
+<section>
+  <div class="sechead"><span class="n">09</span><h2>Appendix B — What to borrow instead</h2></div>
+  <div class="col">
+    <p>Four parallel research passes across GitHub, government portals and the open literature. Everything listed below was opened and checked; where something could not be verified it is marked as such. The rule is the same as everywhere else on this page: no repository is recommended because its name sounds relevant.</p>
+  </div>
+
+  <h3 style="margin:34px 0 12px">Who else is already out there</h3>
+  <div class="scroll">
+    <table>
+      <thead><tr><th>System</th><th>What it does</th><th>Why the gap survives</th></tr></thead>
+      <tbody>
+        <tr><td>iFLOWS-Mumbai <span class="mono-cell">MoES</span></td><td>Coupled 1D drainage + 2D hydrodynamic model, 20 cm DEM, 120 rain gauges, ward-level depth.</td><td>6 to 72 hours ahead, ward scale, built on bespoke survey data for one city.</td></tr>
+        <tr><td>CFLOWS-Chennai <span class="mono-cell">MoES</span></td><td>Web-GIS decision support with a pre-computed inundation library plus live model runs.</td><td>Same scale and horizon; agency-facing, not a public street-level nowcast.</td></tr>
+        <tr><td>Jalsuraksha / Barapullah <span class="mono-cell">IIT Delhi</span></td><td>The closest technical prior art we found: a live web-GIS showing junction-level SWMM flooding depth, driven by IMD AWS rainfall, satellite rainfall and WRF forecasts.</td><td>One 376 km² basin in Delhi. Opening it today, the latest data shown is January 2025 — a frozen case study, not a running service. No public code.</td></tr>
+        <tr><td>Bengaluru KSNDMC / BBMP</td><td>~100 rain gauges and ~105 drain water-level sensors, 15-minute updates, colour-coded thresholds.</td><td>Sensor alerting — it tells you a drain has crossed a level, not where water will pool in the next hour.</td></tr>
+        <tr><td>Kolkata KMC (ADB-funded)</td><td>400+ ultrasonic sensors at hotspots and pumping stations feeding a cloud dashboard.</td><td>Monitoring and threshold alerts. No forward-looking hydraulic model.</td></tr>
+        <tr><td>C-FLOOD <span class="mono-cell">CWC + C-DAC, 2025</span></td><td>National village-level riverine inundation forecasting, two days ahead.</td><td>Different hazard, different agency, different scale. Name it to show you know the landscape — it is not your competitor.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="col" style="margin-top:20px">
+    <p>Nothing we found couples a live rainfall nowcast to a real municipal drain capacity model and outputs a continuously updating 0–3 hour, street-segment forecast for an Indian ward. The gap is real. It is narrower than the thread implied, and it must be stated against these systems by name rather than against nothing.</p>
+  </div>
+
+  <h3 style="margin:38px 0 12px">Two rival SIH26085 demos are already public</h3>
+  <div class="col">
+    <p>Both are live right now and both self-identify as SIH26085 entries. One is a Mumbai street map with a 0–180 minute time scrubber and a real simulate-and-replay backend; its own footer admits synthetic rainfall and an inferred drainage network, and it reports street depths above 200 cm that will not survive scrutiny. The other is a polished dashboard built on an invented ward with invented street names, with sample scores displayed and honestly labelled as illustrative, drawing live rainfall from a public weather API "as a demo substitute for a Doppler radar nowcast feed".</p>
+    <p>That is the bar. Both are prettier than anything you will build in two weeks — and both are hollow at exactly the two points that decide this problem statement. A team that plugs in <em>real</em> drain geometry and reports <em>measured</em> skill on a real event beats both without needing a nicer interface.</p>
+  </div>
+
+  <h3 style="margin:38px 0 12px">The build list</h3>
+  <div class="scroll">
+    <table>
+      <thead><tr><th>You need to</th><th>Use</th><th>Licence</th><th>Note</th></tr></thead>
+      <tbody>
+        <tr><td>Run drainage hydraulics</td><td><span class="mono">pyswmm/pyswmm</span> — ships the EPA SWMM engine, steps a simulation from Python and reads node depth, flooding and link flow live</td><td>BSD-2</td><td>This is your surcharge engine. Pair with <span class="mono">MarkusPic/swmm_api</span> (MIT) to get pipe and manhole geometry into a valid model and back out as a graph.</td></tr>
+        <tr><td>Build a network where data is missing</td><td><span class="mono">ImperialCollegeLondon/SWMManywhere</span> — derives a plausible sewer network from street network, terrain and building footprints for any bounding box</td><td>BSD-3</td><td>Your portability demo. Use it for the second ward, never to replace Chennai's published drain lines.</td></tr>
+        <tr><td>Nowcast rainfall</td><td><span class="mono">pySTEPS/pysteps</span> — the optical-flow / Lagrangian-persistence method national met services actually run</td><td>BSD-3</td><td>No training required, runs on a laptop, and it is the approach NCMRWF's own people respect. Make this the centrepiece.</td></tr>
+        <tr><td>Read Indian radar files</td><td><span class="mono">syedhamidali/radarx</span> and its predecessor <span class="mono">PyScanCf</span>; <span class="mono">wradlib/wradlib</span> for reflectivity-to-rain-rate and gridding</td><td>MIT</td><td>radarx explicitly reads IMD radar NetCDF sweeps — the missing link between an IMD file and a pysteps-ready grid. <span class="mono">nitigsingh/pyiwr</span> (IIT Indore) is a second opinion on the same files.</td></tr>
+        <tr><td>Have a rainfall fallback that always works</td><td>NASA GPM IMERG near-real-time, free with an Earthdata login</td><td>Free</td><td>Gridded, global, about 10 km. Coarse, but it is real gridded rainfall you can definitely get, unlike raw IMD radar volumes which go through a paid, ticketed portal.</td></tr>
+        <tr><td>Move water over terrain</td><td><span class="mono">landlab/landlab</span> OverlandFlow — a diffusive-wave solver in pure Python with tutorial notebooks</td><td>MIT</td><td>No compiler, no calibration data needed for a first run. <span class="mono">pysheds</span> or <span class="mono">Deltares/pyflwdir</span> give you a cheap height-above-drainage susceptibility layer as a sanity check.</td></tr>
+        <tr><td>Route around flooding</td><td><span class="mono">gboeing/osmnx</span> + NetworkX, whose shortest-path weight accepts a function — so flooded edges get a penalty or infinite cost and the route changes</td><td>MIT</td><td>Runs inside your own API process, no server to stand up. If you prefer to stay in the database, pgRouting's dynamic edge query does the same thing in SQL.</td></tr>
+        <tr><td>Draw the map</td><td>MapLibre with a deck.gl example layer for depth and road risk; kepler.gl to copy layer-panel and legend patterns</td><td>MIT</td><td>Copy a single example layer rather than adopting a framework.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="col" style="margin-top:24px">
+    <p><strong>What to skip, and why.</strong> The GNN drainage surrogate the thread ranked first — <span class="mono">Zhiyu014/GNN-UDS</span> — pins TensorFlow 2.6 and a 2021-era stack that will fight a modern Python install; treat the idea as a slide, not a dependency. Deep-learning rainfall nowcasters (DGMR, SmaAt-UNet, NowcastNet) either ship no usable weights or are trained on European radar grids, and claiming an uncalibrated one to nowcasting specialists is a liability. Compiled or GPU-only flood solvers (ANUGA, BG_Flood) will eat the build in compilation. And OSRM, despite being the obvious routing name, precomputes its graph — you cannot change edge costs per request, which is precisely what a nowcast needs.</p>
+  </div>
+
+  <h3 style="margin:38px 0 12px">Data you can download today</h3>
+  <div class="col">
+    <p>The single most valuable find of this whole review is on OpenCity, and it dissolves the validation problem that the fabricated citation was papering over.</p>
+  </div>
+  <div class="scroll">
+    <table>
+      <thead><tr><th>Dataset</th><th>What it gives you</th></tr></thead>
+      <tbody>
+        <tr><td>Chennai Flooding Data <span class="mono-cell">GCC, public domain</span></td><td>Nine KML files, verified: flooding points from 2015, <strong>inundation points with depth of inundation in inches</strong>, and flood hazard zones for 5, 10, 25, 50, 100 and 200-year return periods. This is real, located, measured ground truth — you can now score depth as well as yes/no flooding, and you no longer need a single news clipping.</td></tr>
+        <tr><td>Chennai Stormwater Drain maps <span class="mono-cell">GCC, public domain</span></td><td>Per-ward PDFs for 114 wards plus a citywide KML of drain alignments. Geometry is real; diameters, inverts and slopes are not included and must be estimated and labelled.</td></tr>
+        <tr><td>GCC ward boundaries</td><td>Ward and zone KMLs, several vintages including 2022. Needed to clip everything to one ward.</td></tr>
+        <tr><td>Mumbai</td><td>Ward boundaries are open (MCGM via OpenCity, plus a verified GitHub collection of Mumbai spatial layers). No open machine-readable stormwater drain network was found — only scanned reports.</td></tr>
+        <tr><td>Bhuvan / NRSC flood layers</td><td>The viewers work, but the flood layers are raster-only and awkward to extract. Budget time or use them only as a picture, not a pipeline input.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="pull">
+    <p><strong>The city choice is now settled.</strong> Chennai has published drain geometry, ward boundaries, dated flood points <em>and</em> measured inundation depths. Mumbai has none of the drainage data in open form. Build the pilot on a Chennai ward, and use SWMManywhere on a second city only to prove the pipeline travels.</p>
+  </div>
+</section>
+
+<section>
+  <div class="sechead"><span class="n">10</span><h2>Sources</h2></div>
+  <ul class="tight srcs">
+    <li>SIH26085 problem statement, organisation and deadline — <a href="https://sih.gov.in/sih2026PS">sih.gov.in/sih2026PS</a></li>
+    <li>SIH evaluation guideline, Round 1–3 criteria and weightings — Ministry of Education Innovation Cell</li>
+    <li>iFLOWS-Mumbai launch and architecture — PIB, 11 June 2020, and NCCR briefing documents</li>
+    <li>CFLOWS-Chennai overview — National Centre for Coastal Research, MoES</li>
+    <li>IMD API index, radar and nowcast products — <a href="https://api.imd.gov.in/public/api_reference.html">api.imd.gov.in</a>; radar data supply — radarapi.imd.gov.in</li>
+    <li>Chennai stormwater drain maps, GCC via OpenCity — <a href="https://data.opencity.in/dataset/chennai-stormwater-drain-swd-maps">data.opencity.in</a></li>
+    <li>CartoDEM distribution policy — <a href="https://www.nrsc.gov.in/nrscnew/Dataproducts_Thematic_cartodem.php">NRSC</a></li>
+    <li>SWMManywhere — <a href="https://github.com/ImperialCollegeLondon/SWMManywhere">github.com/ImperialCollegeLondon/SWMManywhere</a> (BSD-3)</li>
+    <li>EPA SWMM — <a href="https://github.com/USEPA/Stormwater-Management-Model">github.com/USEPA/Stormwater-Management-Model</a>; PySWMM — <a href="https://github.com/pyswmm/pyswmm">github.com/pyswmm/pyswmm</a></li>
+    <li>Chennai Flooding Data (2015 flood points, inundation depth, hazard zones) — <a href="https://data.opencity.in/dataset/chennai-flooding-data">data.opencity.in</a></li>
+    <li>Urban Flood Early Warning System for Barapullah, IIT Delhi — <a href="https://jalsuraksha.iitd.ac.in/barapullah/index.html">jalsuraksha.iitd.ac.in</a> (opened; latest data shown January 2025)</li>
+    <li>pysteps — <a href="https://github.com/pySTEPS/pysteps">github.com/pySTEPS/pysteps</a>; radarx — <a href="https://github.com/syedhamidali/radarx">github.com/syedhamidali/radarx</a>; wradlib — <a href="https://github.com/wradlib/wradlib">github.com/wradlib/wradlib</a></li>
+    <li>Landlab — <a href="https://github.com/landlab/landlab">github.com/landlab/landlab</a>; OSMnx — <a href="https://github.com/gboeing/osmnx">github.com/gboeing/osmnx</a>; swmm_api — <a href="https://github.com/MarkusPic/swmm_api">github.com/MarkusPic/swmm_api</a></li>
+    <li>FloodSense — <a href="https://github.com/roohiiiit/FloodSense">github.com/roohiiiit/FloodSense</a>, cloned and read at commit c044c61 (12 Nov 2025, MIT)</li>
+  </ul>
+</section>
+
+<footer>
+  Review of the 3-turn Perplexity thread of 2–4 September 2026, plus a direct code read of the FloodSense repository and four parallel scans of open tooling, prior art and Indian open data against the problem statement, the official SIH process, and the deck currently in the SIH folder. Every claim above is traceable to a source in section 08; where a figure could not be verified, it was cut rather than estimated.
+</footer>
+
+</div>

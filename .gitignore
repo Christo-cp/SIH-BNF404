@@ -1,0 +1,27 @@
+# secrets — never commit
+.env
+*.env
+!.env.example
+
+# data: fetched by scripts, not stored in git
+data/raw/*
+data/interim/*
+data/processed/*
+data/ground_truth/*
+!data/**/.gitkeep
+
+# model run outputs
+outputs/runs/*
+!outputs/runs/.gitkeep
+
+# python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.ipynb_checkpoints/
+
+# os / editor
+.DS_Store
+Thumbs.db
